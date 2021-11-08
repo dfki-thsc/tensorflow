@@ -477,6 +477,48 @@ struct MemoryCountPass : MemoryCountBase<MemoryCountPass> {
   }
 };
 
+struct AllocEmitPass : AllocEmitBase<AllocEmitPass> {
+  void runOnFunction() override {
+    Operation *op = getFunction();
+    FuncOp fOp = getFunction();
+    MLIRContext *context = &getContext();
+    //DenseMap<Value,std::list<Operation*>> viewToAlloc;
+    for (int i = 0; i < fOp.getNumArguments(); ++i)
+    {
+      Value arg = fOp.getArgument(i);
+      std::list<Operation*> viewList;
+      op->walk([&](Operation *operation){
+        llvm::errs() << operation -> getLoc() << "\n";
+        //operation->dump();
+        if (dyn_cast<memref::ViewOp>(operation)
+          && (operation->getOperand(0)) == arg){
+            viewList.push_back(operation);
+        }
+      });
+      if (!viewList.empty()){
+        llvm::errs() << "view list size greather zero\n";
+        auto firstOp = *viewList.begin();
+        Block* block = firstOp->getBlock();
+        OpBuilder allocBuilder(&(block->front()));
+        Location location = block->front().getLoc();
+
+        auto type = arg.getType().cast<ShapedType>();
+        llvm::errs() << type.getElementType() << "\n";
+        llvm::errs() << location << "\n";
+        auto memrefType = MemRefType::get(type.getShape(),
+                                        type.getElementType());
+        Value allocatedBuffer =
+          allocBuilder.create<memref::AllocOp>(location, memrefType);
+
+        for (auto& viewOp : viewList){
+          viewOp->setOperand(0,allocatedBuffer);
+        }
+
+      }
+    }
+  }
+};
+
 } // namespace
 
 std::unique_ptr<FunctionPass> createBufferPackingPass(unsigned window_size) {
@@ -485,6 +527,10 @@ std::unique_ptr<FunctionPass> createBufferPackingPass(unsigned window_size) {
 
 std::unique_ptr<FunctionPass> createMemoryCountPass() {
   return std::make_unique<MemoryCountPass>();
+}
+
+std::unique_ptr<FunctionPass> createAllocEmitPass() {
+  return std::make_unique<AllocEmitPass>();
 }
 
 } // namespace mlir

@@ -49,6 +49,9 @@ std::unique_ptr<FunctionPass> createCopyRemovalPass();
 /// Creates a pass that computes the allocated memory.
 std::unique_ptr<FunctionPass> createMemoryCountPass();
 
+/// Creates a pass that emit trivial allocations.
+std::unique_ptr<FunctionPass> createAllocEmitPass();
+
 } // namespace mlir
 
 #endif // TENSORFLOW_COMPILER_MLIR_HLO_LIB_TRANSFORMS_PASSES_H_

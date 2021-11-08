@@ -62,6 +62,11 @@ def MemoryCount : FunctionPass<"memory-count"> {
   let constructor = "createMemoryCountPass()";
 }
 
+def AllocEmit : FunctionPass<"alloc-emit"> {
+  let summary = "";
+  let constructor = "createAllocEmitPass()";
+}
+
 def TestUserange : FunctionPass<"test-print-userange"> {
   let summary = "Test pass for checking userange intervals.";
   let constructor = "createTestUserangePass()";
